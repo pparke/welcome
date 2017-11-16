@@ -1,0 +1,48 @@
+@import "./variables.scss";
+
+.navmenu {
+	position: absolute;
+	top: 0;
+	background-color: $red;
+	height: 60px;
+	width: 100%;
+	padding: 0 10px 0 5px;
+	display: flex;
+	align-items: center;
+	flex-direction: row;
+
+	.title {
+		color: $title-color;
+		font-family: $title-font;
+		font-size: 38px;
+		line-height: 38px;
+	}
+
+	ul {
+    margin: 0;
+    padding: 0;
+		height: inherit;
+    display: flex;
+    justify-content: space-between;
+		align-items: center;
+  }
+
+	.menu-toggle {
+		z-index: 1;
+    padding: 0 15px;
+    color: #fff;
+    text-shadow: 0 0 1px #444;
+    cursor: pointer;
+    transition: all ease .3s;
+
+    &:hover {
+      color: #fff;
+      text-shadow: 0 0 1px #000;
+			transform: scale(1.1, 1.1);
+    }
+
+		&:active {
+			transform: scale(0.9, 0.9);
+		}
+  }
+}

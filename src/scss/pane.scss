@@ -1,0 +1,105 @@
+@import './variables.scss';
+$topBg: rgba(100, 100, 100, 1);
+$bottomBg: darken($topBg, 5%);
+$barHeight: 30px;
+$controlSize: $barHeight / 2.5;
+$contentBg: rgba(0, 0, 10, 0.5);
+$clearBg: rgba(0, 0, 30, 0.5);
+
+.pane.window {
+  color: rgb(185, 128, 0);
+  display: block;
+  min-height: 400px;
+  resize: both;
+  z-index: 10;
+  flex: 1 auto;
+  margin: 10px;
+
+  .top-bar {
+    height: $barHeight;
+    border-radius: 5px 5px 0 0;
+    border-top: thin solid lighten($topBg, 1%);
+    border-bottom: thin solid lighten($bottomBg, 1%);
+    background: linear-gradient($topBg, $bottomBg);
+
+    .control {
+      width: $controlSize;
+      height: $controlSize;
+      border-radius: 2px;
+      background-color: rgb(128, 64, 64);
+      display: inline-block;
+      margin-top: $barHeight / 3.2;
+      margin-left: 10px;
+    }
+
+    .title {
+      display: inline-block;
+      margin: 0 auto;
+    }
+  }
+
+  .content {
+    margin: 0;
+    border-radius: 0 0 5px 5px;
+    background-color: $contentBg;
+    min-height: inherit;
+    padding: 10px;
+    overflow-y: scroll;
+    height: 400px;
+    box-shadow: inset 1px -1px 4px darken($contentBg, 5%);
+
+    pre {
+      margin: 0;
+    }
+  }
+}
+
+.pane.clear {
+  color: #b3b3b3;
+  display: block;
+  min-height: 400px;
+  resize: both;
+  z-index: 10;
+  flex: 1 auto;
+  margin: 10px;
+  box-shadow: 1px 3px 6px 2px rgba(0, 0, 0, 0.3);
+
+  &.column-display {
+      flex-direction: column;
+  }
+
+  .top-bar {
+    height: $barHeight;
+    background-color: rgba(60,60,60,.5);
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+
+    .title {
+      display: inline-block;
+      font-family: $text-font;
+      font-weight: bold;
+      margin-left: 10px;
+      font-size: 18;
+      line-height: 18;
+    }
+  }
+
+  .content {
+    margin: 0;
+    background-color: rgba(60,60,60,.5);
+    font-family: $text-font;
+    min-height: inherit;
+    padding: 10px;
+    min-height: 400px;
+    display: flex;
+
+    &.column {
+        flex-direction: column;
+    }
+
+    pre {
+      margin: 0;
+    }
+  }
+}

@@ -1,0 +1,34 @@
+.todo-container {
+  flex: 1;
+  max-width: 300px;
+
+  .todo-input {
+    width: 90%;
+    padding: 5px;
+    margin: 5px;
+    font-size: 1.2rem;
+    color: #fff;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid #af5353;
+
+    &:focus {
+      outline: none;
+    }
+  }
+
+  .todo-list {
+    color: #fff;
+
+    ul {
+      list-style: none;
+      padding: 0 5px;
+      margin: 15px 0;
+
+      li {
+        margin: 10px 0;
+        font-size: 1.2rem;
+      }
+    }
+  }
+}

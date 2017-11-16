@@ -1,0 +1,11 @@
+.signup {
+	label {
+		padding: 10px;
+	}
+	input {
+		max-width: 20%;
+	}
+	input:not([type=submit]) {
+		margin-left: 10px;
+	}
+}

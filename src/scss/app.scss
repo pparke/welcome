@@ -1,0 +1,16 @@
+@import "./variables.scss";
+
+.app {
+	h1.welcome {
+		font-size: 8em;
+		color: $title-color;
+		font-family: $title-font;
+		text-align: center;
+	}
+}
+
+.column-container {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-evenly;
+}
