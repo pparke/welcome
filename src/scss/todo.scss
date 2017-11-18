@@ -1,6 +1,7 @@
 .todo-container {
   flex: 1;
   max-width: 300px;
+  margin-top: 30px;
 
   .todo-input {
     width: 90%;
@@ -15,6 +16,10 @@
     &:focus {
       outline: none;
     }
+  }
+
+  .todo-remove {
+      color: #fff;
   }
 
   .todo-list {

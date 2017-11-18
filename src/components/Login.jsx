@@ -1,8 +1,6 @@
 import React from 'react';
-import { joinGame } from '../lib/api';
 import store from '../lib/Store';
 import config from '../../config';
-import { checkContentType } from '../lib/api';
 import { Redirect } from 'react-router'
 
 // components
@@ -79,7 +77,6 @@ async function loginRequest(username, password) {
 			'Content-Type': 'application/x-www-form-urlencoded'
 		}
 	});
-	checkContentType(response);
 	const json = await response.json();
 	return json;
 }

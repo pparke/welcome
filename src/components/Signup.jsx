@@ -1,8 +1,6 @@
 import React from 'react';
-import { joinGame } from '../lib/api';
 import store from '../lib/Store';
 import config from '../../config';
-import { checkContentType } from '../lib/api';
 import { Redirect } from 'react-router'
 
 // components
@@ -94,7 +92,6 @@ async function signupRequest(data) {
 		},
 		body: JSON.stringify(data)
 	});
-	checkContentType(response);
 	const json = await response.json();
 	return json;
 }

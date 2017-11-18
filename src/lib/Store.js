@@ -25,12 +25,6 @@ export class Store {
 		}
 		// local state or session data specific to this instance
 		this._state = {};
-		// raw data provided by the api
-		this._data = {};
-		// application defined views into the api data (think sql views)
-		this._views = {};
-		// application defined models that determine how
-		this._models = {};
 
 		this.subscribers = new Set();
 
@@ -47,37 +41,59 @@ export class Store {
 		}
 	}
 
-	async findRecord(name, id) {
-		return this.db.get(`${name}_${id}`);
+	async findRecord(id) {
+		let result = {};
+		try {
+			result = await this.db.get(id);
+		}
+		catch (err) {
+			if (err.name === 'not_found') {
+				console.log(`Document not found ${err.docId}`);
+			}
+		}
+		return result;
 	}
 
-	async findRecords(name, ids) {
+	async findRecords(ids) {
+		console.log('looking for ids', ids)
 		const result = await this.db.allDocs({
 			include_docs: true,
-			keys: ids.map(id => `${name}_${id}`)
+			keys: ids
 		});
-		return result.rows;
+		console.log('got result', result)
+		return result.rows.map(row => row.doc);
 	}
 
 	async findAll(name) {
-		console.log('find all', name);
 		const result = await this.db.allDocs({
 			include_docs: true,
 			startkey: name,
-			endkey: `${name}\ufff0`
+			endkey: `${name}_\ufff0`
 		});
-		console.log('got result', result)
-		return result.rows.map(row => ({
-			id: row.id,
-			title: row.doc.title
-		}));
+
+		return result.rows.map(row => row.doc);
 	}
 
 	async createRecord(name, body) {
 		const id = name + '_' + uuid();
 		body._id = id;
-		console.log('creating record', body)
 		const result = await this.db.put(body);
+		this.publish();
+		return result;
+	}
+
+	async removeRecord(id) {
+		const record = await this.db.get(id);
+		record._deleted = true;
+		const result = await this.db.put(record);
+		this.publish();
+		return result;
+	}
+
+	async updateRecord(id, body) {
+		const record = await this.db.get(id);
+		const updated = Object.assign({}, record, body);
+		const result = await this.db.put(updated);
 		this.publish();
 		return result;
 	}
@@ -114,7 +130,6 @@ export class Store {
 
 	setState(partial) {
 		this._state = merge(this._state, partial);
-		console.log('state is now', this._state);
 		this.publish();
 	}
 
@@ -156,6 +171,8 @@ export class Store {
 					this.state = {
 						data: null
 					}
+
+					this.updateAsyncData = this.updateAsyncData.bind(this);
 				}
 
 				render() {
@@ -170,13 +187,9 @@ export class Store {
 					return <div> Loading... </div>;
 				}
 
-				componentDidMount() {
-					this.unsubscribe = store.subscribe(this.handleChange.bind(this));
-
-					console.log('mounted')
+				updateAsyncData() {
 					const result = stateMap(store, this.props);
 					if (result instanceof Promise) {
-						console.log('promise', result)
 						result.then((data) => {
 							this.setState({
 								data
@@ -191,11 +204,17 @@ export class Store {
 					}
 				}
 
+				componentDidMount() {
+					this.updateAsyncData();
+					this.unsubscribe = store.subscribe(this.handleChange.bind(this));
+				}
+
 				componentWillUnmount() {
 					this.unsubscribe();
 				}
 
 				handleChange() {
+					this.updateAsyncData();
 					this.forceUpdate();
 				}
 

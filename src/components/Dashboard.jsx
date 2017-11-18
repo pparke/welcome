@@ -15,42 +15,54 @@ class Dashboard extends React.Component {
     super(props);
     this.state = {
     };
+
+    this.renderLists = this.renderLists.bind(this);
+	this.addList = this.addList.bind(this);
   }
 
   componentDidMount() {
-    const { user } = this.props;
-    console.log('props are =>', this.props)
-    const todos = store.findAll('todos', user.id);
   }
 
   componentWillReceiveProps(next) {
-    console.log('next props', next);
+  }
+
+  renderLists() {
+      return this.props.lists.map(list => {
+          return <Todo title={list.title} key={list._id} listId={list._id} />
+      });
+  }
+
+  async addList() {
+	const list = await store.createRecord('list', {
+		title: 'Todo',
+        todos: []
+	});
   }
 
   render() {
-    const todos = this.props.todos;
-    console.log('todos', todos)
+    const lists = this.renderLists();
     return (
       <div className='dashboard'>
+		  <div className='add-list' onClick={this.addList}>
+              <i className="fa fa-plus" aria-hidden="true"></i> Add List
+          </div>
         <div className='column-container'>
-          <Todo title={'Todo'} items={todos} />
-          <Todo title={'Doing'} items={todos} />
-          <Todo title={'Done'} items={todos} />
+          {lists}
         </div>
       </div>
     );
   }
 }
 
-const mapStore = store => {
+const mapStore = async store => {
     const state = store.state;
-    console.log('state is', state)
+
+    const lists = await store.findAll('list');
 
     // get all the sectors in the current system
-    const todos = store.findAll('todo', state.user.id);
     return {
       user: state.user,
-      todos
+      lists
     };
 };
 
