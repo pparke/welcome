@@ -92,8 +92,10 @@ export class Store {
 
 	async updateRecord(id, body) {
 		const record = await this.db.get(id);
+		console.log('updating record', record)
 		const updated = Object.assign({}, record, body);
 		const result = await this.db.put(updated);
+		console.log('updated', result)
 		this.publish();
 		return result;
 	}

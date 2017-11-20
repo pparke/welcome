@@ -15,7 +15,8 @@ class TodoContainer extends React.Component {
 		this.state = {
 			listId: props.listId,
 			newTodo: {
-				title: ''
+				title: '',
+				complete: false
 			}
 		};
 
@@ -59,6 +60,20 @@ class TodoContainer extends React.Component {
 		}
 	}
 
+	async handleComplete(todo) {
+		const id = todo._id;
+		const result = await store.updateRecord(id, {
+			completed: true
+		});
+	}
+
+	async handleIncomplete(todo) {
+		const id = todo._id;
+		const result = await store.updateRecord(id, {
+			completed: false
+		});
+	}
+
 	async handleRemove(todo) {
 		const id = todo._id;
 		const result = await store.removeRecord(id);
@@ -77,7 +92,12 @@ class TodoContainer extends React.Component {
 						<input className='todo-input' type="text" name="newTodo" onChange={this.handleChange} ref={node => this.input = node}/>
 					</form>
 					<div className='todo-list'>
-						<TodoList todos={this.props.todos} remove={this.handleRemove}/>
+						<TodoList
+							todos={this.props.todos}
+							remove={this.handleRemove}
+							complete={this.handleComplete}
+							incomplete={this.handleIncomplete}
+						/>
 					</div>
 				</Pane>
 			</div>
@@ -86,18 +106,29 @@ class TodoContainer extends React.Component {
 
 }
 
-const Todo = ({ todo, remove }) => {
+const Todo = ({ todo, remove, complete, incomplete }) => {
+	const toggleComplete = () => {
+		todo.completed ? incomplete(todo) : complete(todo);
+	}
+
+	const classNames = todo.completed ? 'completed' : '';
 	return (
-		<li onClick={remove.bind(this, todo)}>
+		<li className={classNames} onClick={toggleComplete}>
 			{ todo.title }
 		</li>
 	);
 }
 
-const TodoList = ({ todos, remove }) => {
+const TodoList = ({ todos, remove, complete, incomplete }) => {
 	const listItems = todos.map((todo) => {
 		return (
-			<Todo todo={todo} key={todo._id} remove={remove} />
+			<Todo
+				todo={todo}
+				key={todo._id}
+				remove={remove}
+				complete={complete}
+				incomplete={incomplete}
+			/>
 		);
 	});
 
