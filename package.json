@@ -37,6 +37,7 @@
     "deepmerge": "^2.0.0",
     "localforage": "^1.5.0",
     "pouchdb": "^6.3.4",
+    "pouchdb-find": "^6.3.4",
     "react": "^15.4.2",
     "react-dom": "^15.4.2",
     "react-fontawesome": "^1.6.1",

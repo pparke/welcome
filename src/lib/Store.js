@@ -1,11 +1,14 @@
 import React from 'react';
 import PouchDB from 'pouchdb';
+import pouchdbfind from 'pouchdb-find';
 import uuid from 'uuid/v1';
 import merge from 'deepmerge';
 import clone from 'clone';
 import config from '../../config.js';
 const singleton = Symbol();
 const enforcer = Symbol();
+
+PouchDB.plugin(pouchdbfind);
 
 /**
 * Creates a singleton that acts as the interface and container of
@@ -64,6 +67,17 @@ export class Store {
 		return result.rows.map(row => row.doc);
 	}
 
+	async findFirst(name) {
+		const result = await this.db.allDocs({
+			include_docs: true,
+			startkey: name,
+			endkey: `${name}_\ufff0`,
+			limit: 1
+		});
+		const doc = result.rows.length > 0 ? result.rows[0].doc : null;
+		return doc;
+	}
+
 	async findAll(name) {
 		const result = await this.db.allDocs({
 			include_docs: true,
@@ -74,9 +88,22 @@ export class Store {
 		return result.rows.map(row => row.doc);
 	}
 
+	/**
+	 * Create a new record with the data contained in body
+	 * name should be a meaningful namespace which will have
+	 * a unique uuid appended to it
+	 * @param  {string|array}  name
+	 * @param  {object}  body
+	 * @return {Promise}
+	 */
 	async createRecord(name, body) {
-		const id = name + '_' + uuid();
+		if (Array.isArray(name)) {
+			name = name.join('/');
+		}
+		const id = name + '/' + uuid();
 		body._id = id;
+		body._createdon = Date.now();
+		body._updatedon = Date.now();
 		const result = await this.db.put(body);
 		this.publish();
 		return result;
@@ -92,10 +119,9 @@ export class Store {
 
 	async updateRecord(id, body) {
 		const record = await this.db.get(id);
-		console.log('updating record', record)
 		const updated = Object.assign({}, record, body);
+		updated._updatedon = Date.now();
 		const result = await this.db.put(updated);
-		console.log('updated', result)
 		this.publish();
 		return result;
 	}

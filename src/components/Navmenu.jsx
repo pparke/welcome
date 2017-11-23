@@ -23,7 +23,12 @@ export default class Navmenu extends React.PureComponent {
 	}
 
 	renderItem(item, i) {
-		return <Navitem key={ i.toString() } text={ item.text } link={ item.link } onClick={ this.props.menuAction.bind(this, item.action) }/>;
+		return <Navitem
+				key={ i.toString() }
+				text={ item.text }
+				link={ item.link }
+				icon={ item.icon }
+				onClick={ this.props.menuAction.bind(this, item.action) }/>;
 	}
 
 	render() {

@@ -6,6 +6,7 @@ import Navbar from './Navbar';
 import Page from './Page';
 import Pane from './Pane';
 import Dashboard from './Dashboard';
+import Schedule from './Schedule';
 import Signup from './Signup';
 import Login from './Login';
 
@@ -25,6 +26,7 @@ const App = () => (
 		<Switch>
 			<Route exact path='/' component={Welcome}/>
 			<Route path='/dashboard' component={Dashboard} />
+            <Route path='/schedule' component={Schedule} />
 			<Route path='/signup' component={Signup} />
 			<Route path='/login' component={Login} />
 		</Switch>
