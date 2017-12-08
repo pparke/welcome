@@ -17,7 +17,7 @@ import '../scss/app.scss';
 import state from '../../assets/data/initialState';
 
 const Welcome = () => (
-  <h1 className='welcome'>Welcome</h1>
+	<h1 className='welcome'>Welcome</h1>
 );
 
 const App = () => (
@@ -26,7 +26,7 @@ const App = () => (
 		<Switch>
 			<Route exact path='/' component={Welcome}/>
 			<Route path='/dashboard' component={Dashboard} />
-            <Route path='/schedule' component={Schedule} />
+			<Route path='/schedule' component={Schedule} />
 			<Route path='/signup' component={Signup} />
 			<Route path='/login' component={Login} />
 		</Switch>

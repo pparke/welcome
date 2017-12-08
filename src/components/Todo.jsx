@@ -13,11 +13,7 @@ class TodoContainer extends React.Component {
 	constructor(props) {
 		super(props);
 		this.state = {
-			listId: props.listId,
-			newTodo: {
-				title: '',
-				complete: false
-			}
+			title: ''
 		};
 
 		this.input = null;
@@ -33,23 +29,27 @@ class TodoContainer extends React.Component {
 
 	handleChange(event) {
 		this.setState({
-			newTodo: {
-				title: event.target.value
-			}
+			title: event.target.value
 		});
 	}
 
 	async handleSubmit(event) {
 		event.preventDefault();
 
+		const { listId } = this.props;
 		try {
-			const todo = this.state.newTodo;
-			todo.listId = this.state.listId;
-			const todoResult = await store.createRecord('todo', todo);
+			const todo = store.createDoc('todo', {
+				title: this.state.title,
+				complete: false,
+				completed_on: null,
+				todo_type: 'checklist',
+				list_id: listId
+			});
+			const todoResult = await store.insertDoc(todo);
 			console.log('created todo', todoResult, todo)
-			const list = await store.findRecord(todo.listId);
+			const list = await store.findRecord(listId);
 			console.log('found list', list)
-			list.todos = [].concat(list.todos, todoResult.id);
+			list.todos = [].concat(list.todos, todo._id);
 			const result = await store.updateRecord(list._id, list);
 			console.log('new todo is', todoResult, 'updated list is', result);
 
@@ -63,14 +63,16 @@ class TodoContainer extends React.Component {
 	async handleComplete(todo) {
 		const id = todo._id;
 		const result = await store.updateRecord(id, {
-			completed: true
+			complete: true,
+			completed_on: Date.now()
 		});
 	}
 
 	async handleIncomplete(todo) {
 		const id = todo._id;
 		const result = await store.updateRecord(id, {
-			completed: false
+			complete: false,
+			completed_on: null
 		});
 	}
 
@@ -81,7 +83,10 @@ class TodoContainer extends React.Component {
 	}
 
 	async handleListRemove() {
-		const result = await store.removeRecord(this.props.listId);
+		const { listId } = this.props;
+		const list = await store.findRecord(listId);
+		const todoResult = await store.removeRecords(list.todos.concat(listId))
+		//const result = await store.removeRecord(listId);
 	}
 
 	render() {
@@ -108,10 +113,10 @@ class TodoContainer extends React.Component {
 
 const Todo = ({ todo, remove, complete, incomplete }) => {
 	const toggleComplete = () => {
-		todo.completed ? incomplete(todo) : complete(todo);
+		todo.complete ? incomplete(todo) : complete(todo);
 	}
 
-	const classNames = todo.completed ? 'completed' : '';
+	const classNames = todo.complete ? 'complete' : '';
 	return (
 		<li className={classNames} onClick={toggleComplete}>
 			{ todo.title }
@@ -139,9 +144,11 @@ const TodoList = ({ todos, remove, complete, incomplete }) => {
 
 const mapStore = async (store, props) => {
 	const list = await store.findRecord(props.listId);
+	console.log('found list', list)
 	let todos = [];
 	if (list && Array.isArray(list.todos)) {
 		todos = await store.findRecords(list.todos);
+		console.log('found todos', todos)
 	}
 	return {
 		todos

@@ -1,6 +1,7 @@
 import React from 'react';
 import PouchDB from 'pouchdb';
 import pouchdbfind from 'pouchdb-find';
+import pouchdbsearch from 'pouchdb-quick-search';
 import uuid from 'uuid/v1';
 import merge from 'deepmerge';
 import clone from 'clone';
@@ -9,6 +10,7 @@ const singleton = Symbol();
 const enforcer = Symbol();
 
 PouchDB.plugin(pouchdbfind);
+PouchDB.plugin(pouchdbsearch);
 
 /**
 * Creates a singleton that acts as the interface and container of
@@ -31,17 +33,38 @@ export class Store {
 
 		this.subscribers = new Set();
 
-		this.db = new PouchDB('todos');
-
-		this.adapter = {
-			local: {
-			}
-		}
+		this.setupDB();
 
 		if ('serviceWorker' in navigator && config.serviceWorker) {
 			navigator.serviceWorker(config.serviceWorker)
 			.then(() => console.log('service worker loaded'));
 		}
+	}
+
+	setupDB() {
+		this.db = new PouchDB('todos');
+		console.log(this)
+	}
+
+	async find(request) {
+		const result = await this.db.find(request);
+		if (request.limit === 1) {
+			return result.docs[0];
+		}
+		return result.docs;
+	}
+
+	async search(query, fields) {
+		const result = await this.db.search({
+			query,
+			fields,
+			include_docs: true
+		});
+
+		return {
+			docs: result.rows.map(row => row.doc),
+			scores: result.rows.map(row => row.score)
+		};
 	}
 
 	async findRecord(id) {
@@ -58,12 +81,10 @@ export class Store {
 	}
 
 	async findRecords(ids) {
-		console.log('looking for ids', ids)
 		const result = await this.db.allDocs({
 			include_docs: true,
 			keys: ids
 		});
-		console.log('got result', result)
 		return result.rows.map(row => row.doc);
 	}
 
@@ -82,10 +103,29 @@ export class Store {
 		const result = await this.db.allDocs({
 			include_docs: true,
 			startkey: name,
-			endkey: `${name}_\ufff0`
+			endkey: `${name}\ufff0`
 		});
 
 		return result.rows.map(row => row.doc);
+	}
+
+	/**
+	 * Creates a document obj
+	 * @param  {string} name
+	 * @param  {object} body
+	 * @return {object}
+	 */
+	createDoc(name, body) {
+		if (Array.isArray(name)) {
+			name = name.join('/');
+		}
+		const id = `${name}/${uuid()}`;
+		const doc = Object.assign({}, body, {
+			_id: id,
+			created_on: Date.now(),
+			updated_on: Date.now()
+		});
+		return doc;
 	}
 
 	/**
@@ -97,14 +137,23 @@ export class Store {
 	 * @return {Promise}
 	 */
 	async createRecord(name, body) {
-		if (Array.isArray(name)) {
-			name = name.join('/');
-		}
-		const id = name + '/' + uuid();
-		body._id = id;
-		body._createdon = Date.now();
-		body._updatedon = Date.now();
-		const result = await this.db.put(body);
+		const doc = this.createDoc(name, body);
+		return this.insertDoc(doc);
+	}
+
+	async insertDoc(doc) {
+		const result = await this.db.put(doc);
+		this.publish();
+		return result;
+	}
+
+	async createRecords(name, docs) {
+		docs = docs.map(doc => this.createDoc(name, doc));
+		return this.insertDocs(docs);
+	}
+
+	async insertDocs(docs) {
+		const result = await this.db.bulkDocs(docs);
 		this.publish();
 		return result;
 	}
@@ -112,7 +161,27 @@ export class Store {
 	async removeRecord(id) {
 		const record = await this.db.get(id);
 		record._deleted = true;
+		record.deleted_on = Date.now();
 		const result = await this.db.put(record);
+		this.publish();
+		return result;
+	}
+
+	async removeRecords(ids) {
+		const recordResult = await this.db.allDocs({
+			include_docs: true,
+			keys: ids
+		});
+		const docs = recordResult.rows.map(row => {
+			const doc = row.doc;
+			doc._deleted = true;
+			doc.deleted_on = Date.now();
+			return doc;
+		});
+
+		console.log('docs are', docs)
+
+		const result = await this.db.bulkDocs(docs);
 		this.publish();
 		return result;
 	}
@@ -120,7 +189,7 @@ export class Store {
 	async updateRecord(id, body) {
 		const record = await this.db.get(id);
 		const updated = Object.assign({}, record, body);
-		updated._updatedon = Date.now();
+		updated.updated_on = Date.now();
 		const result = await this.db.put(updated);
 		this.publish();
 		return result;
@@ -225,6 +294,7 @@ export class Store {
 						})
 						.catch((err) => {
 							console.log('Biffed it, error:', err);
+							throw err;
 						});
 					}
 					else {

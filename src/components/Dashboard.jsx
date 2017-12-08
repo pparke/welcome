@@ -5,6 +5,8 @@ import store from '../lib/Store';
 import Pane from './Pane';
 import Stats from './Stats';
 import Todo from './Todo';
+import Note from './Note';
+import SearchBar from './SearchBar';
 
 // assets
 import '../scss/dashboard.scss';
@@ -17,7 +19,9 @@ class Dashboard extends React.Component {
 		};
 
 		this.renderLists = this.renderLists.bind(this);
+		this.renderNotes = this.renderNotes.bind(this);
 		this.addList = this.addList.bind(this);
+		this.setNotes = this.setNotes.bind(this);
 	}
 
 	componentDidMount() {
@@ -32,6 +36,19 @@ class Dashboard extends React.Component {
 		});
 	}
 
+	renderNotes(notes) {
+		if (!notes) return;
+		return notes.map(note => {
+			return <Note title={note.title} content={note.content} key={note._id} noteId={note._id} />
+		});
+	}
+
+	setNotes(notes) {
+		this.setState({
+			matchingNotes: notes
+		});
+	}
+
 	async addList() {
 		const list = await store.createRecord('list', {
 			title: 'Todo',
@@ -39,15 +56,32 @@ class Dashboard extends React.Component {
 		});
 	}
 
+	async clearAll() {
+		await store.db.destroy();
+		store.setupDB();
+	}
+
 	render() {
 		const lists = this.renderLists();
+		const notes = this.renderNotes(this.props.notes);
+		const matchingNotes = this.renderNotes(this.state.matchingNotes);
 		return (
 			<div className='dashboard'>
-				<div className='add-list' onClick={this.addList}>
-					<i className="fa fa-plus" aria-hidden="true"></i> Add List
+				<div className='btn add-list' onClick={this.addList}>
+					<i className='fa fa-plus' aria-hidden='true'></i> Add List
+				</div>
+				<div className='btn clear-all' onClick={this.clearAll}>
+					<i className='fa fa-trash-o' aria-hidden='true'></i> Clear All
+				</div>
+				<SearchBar handleResults={this.setNotes}/>
+				<div className='column-container'>
+					{ matchingNotes }
 				</div>
 				<div className='column-container'>
-					{lists}
+					{ notes }
+				</div>
+				<div className='column-container'>
+					{ lists }
 				</div>
 			</div>
 		);
@@ -58,11 +92,12 @@ const mapStore = async store => {
 	const state = store.state;
 
 	const lists = await store.findAll('list');
+	const notes = await store.findAll('notes');
 
-	// get all the sectors in the current system
 	return {
 		user: state.user,
-		lists
+		lists,
+		notes
 	};
 };
 
